@@ -1,0 +1,13 @@
+.button {
+  padding: 0.5rem;
+  margin: 0.2rem;
+  background-color: blueviolet;
+  border-radius: 2px;
+}
+
+.button-reset {
+  padding: 0.5rem;
+  margin: 0.2rem;
+  background-color: red;
+  border-radius: 2px;
+}
