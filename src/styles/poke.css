@@ -31,11 +31,20 @@ button {
   background: #2f2e2e;
   padding: 1rem 1.2rem;
   margin-top: 0.5rem;
-  transition: background 0.4s, color 0.25s;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  will-change: background, color, transform;
 }
-button:hover {
+button:hover:not(:disabled) {
   background: #ba9f46;
   color: white;
+  transform: translateY(-1px);
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 label {

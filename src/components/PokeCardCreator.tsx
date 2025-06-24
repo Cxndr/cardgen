@@ -1,24 +1,76 @@
 "use client";
 
-import {
-  HorizontalAlign,
-  Jimp,
-  loadFont,
-  VerticalAlign,
-  rgbaToInt,
-} from "jimp";
+import { Jimp } from "jimp";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "@/styles/poke.css";
 import { DotLoader } from "react-spinners";
+import { PokemonCardGenerator, PokemonCardData, ImagePosition } from "@/utils/cardGenerator";
+import { useDebounce } from "@/utils/debounce";
+import ImagePositionControls from "./ImagePositionControls";
+import ImagePositionOverlay from "./ImagePositionOverlay";
 
 export default function PokeCardCreator() {
   const [output, setOutput] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const isGeneratingRef = useRef(false);
   const [file, setFile] = useState<File | null>(null);
   const [lengthValue, setLengthValue] = useState("0'1\"");
   const [weightValue, setWeightValue] = useState("0.1");
   const [weightSlider, setWeightSlider] = useState(1);
   const [lengthSlider, setLengthSlider] = useState(1);
+  
+  // Image positioning state
+  const [positioningEnabled, setPositioningEnabled] = useState(false);
+  const [imagePosition, setImagePosition] = useState<ImagePosition>({
+    x: 279, // Center of 558px width
+    y: 195, // Center of 390px height
+    scale: 1
+  });
+
+  // Auto-calculate initial scale when image changes
+  useEffect(() => {
+    if (file) {
+      const img = document.createElement('img');
+      img.onload = () => {
+        const frameWidth = 558;
+        const frameHeight = 390;
+        
+        // Calculate scale to fill frame dimension (fill the constraining dimension)
+        const scaleX = frameWidth / img.width;
+        const scaleY = frameHeight / img.height;
+        const imageAspectRatio = img.width / img.height;
+        const frameAspectRatio = frameWidth / frameHeight;
+        
+        let fitScale;
+        if (imageAspectRatio > frameAspectRatio) {
+          // Image is wider than frame - fill HEIGHT
+          fitScale = scaleY;
+        } else {
+          // Image is taller than frame - fill WIDTH  
+          fitScale = scaleX;
+        }
+        
+        setImagePosition({
+          x: 279, // Center
+          y: 195, // Center  
+          scale: fitScale
+        });
+      };
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Reset to default for MissingNo
+      setImagePosition({
+        x: 279,
+        y: 195,
+        scale: 1
+      });
+    }
+  }, [file]);
 
   const [formData, setFormData] = useState({
     name: "MissingNo.",
@@ -34,6 +86,73 @@ export default function PokeCardCreator() {
     resistance: "none",
     retreatCost: "",
   });
+
+  // Debounce form data changes to reduce unnecessary regenerations
+  const debouncedFormData = useDebounce(formData, 500);
+  const debouncedImagePosition = useDebounce(imagePosition, 300);
+
+  // Preload assets on component mount
+  useEffect(() => {
+    PokemonCardGenerator.preloadAssets();
+  }, []);
+
+  const generateCard = useCallback(async () => {
+    // Don't generate card while positioning mode is enabled (for real-time feedback)
+    if (isGeneratingRef.current || positioningEnabled) return;
+    
+    isGeneratingRef.current = true;
+    setIsGenerating(true);
+    
+    try {
+      let inputImage: any;
+      
+      if (!file) {
+        inputImage = await Jimp.read("/poke/missingno.png");
+      } else {
+        const buffer = await file.arrayBuffer();
+        inputImage = await Jimp.read(buffer);
+      }
+
+      const cardData: PokemonCardData = {
+        ...debouncedFormData,
+        lengthValue,
+        weightValue,
+      };
+
+      const outputImage = await PokemonCardGenerator.generateCard(
+        inputImage,
+        cardData,
+        // Use positioning if user has ever enabled it and moved the image from center
+        (debouncedImagePosition.x !== 279 || debouncedImagePosition.y !== 195 || debouncedImagePosition.scale !== 1),
+        debouncedImagePosition
+      );
+
+      const base64 = await outputImage.getBase64("image/png");
+      setOutput(base64);
+    } catch (error) {
+      console.error("Error generating card:", error);
+    } finally {
+      isGeneratingRef.current = false;
+      setIsGenerating(false);
+    }
+  }, [file, debouncedFormData, lengthValue, weightValue, positioningEnabled, debouncedImagePosition]);
+
+  // Generate card when dependencies change
+  useEffect(() => {
+    generateCard();
+  }, [generateCard]);
+
+  // Generate initial card on mount
+  useEffect(() => {
+    generateCard();
+  }, []);
+
+  // Generate final card when positioning mode is turned off
+  useEffect(() => {
+    if (!positioningEnabled) {
+      generateCard();
+    }
+  }, [positioningEnabled, generateCard]);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
@@ -93,211 +212,6 @@ export default function PokeCardCreator() {
     });
   }
 
-  useEffect(() => {
-    // const abortController = new AbortController();
-
-    const renderCardReset = setInterval(() => {
-      async function makeCard(inputImage: InstanceType<typeof Jimp>) {
-        // if (abortController.signal.aborted) return;
-
-        // add overlay
-        const blank = new Jimp({
-          width: 726,
-          height: 996,
-          color: rgbaToInt(0, 0, 0, 0),
-        });
-        blank.opacity(0);
-        const overlay = await Jimp.read(`/poke/${formData.type}.png`);
-        const resizedInput = inputImage.resize({ w: 558, h: 390 });
-        const background = blank.composite(resizedInput, 82, 122);
-        const card = background.composite(overlay, 0, 0);
-
-        // setup
-        const gillCb44 = await loadFont("/fonts/gill-cb-44.fnt");
-        const gillCb48 = await loadFont("/fonts/gill-cb-48.fnt");
-        const gillRp64 = await loadFont("/fonts/gill-rp-64.fnt");
-        // const gillRi24 = await loadFont("/fonts/gill-ri-24.fnt");
-        // const gillRi22 = await loadFont("/fonts/gill-ri-22.fnt");
-        // const gillRbi24 = await loadFont("/fonts/gill-rbi-24.fnt");
-        const gillRbi22 = await loadFont("/fonts/gill-rbi-22.fnt");
-        const energyType = await Jimp.read(
-          `/poke/energy-large-${formData.type}.png`
-        );
-        const energyColorless = await Jimp.read(`/poke/energy-colorless.png`);
-        let weakness;
-        if (formData.weakness != "none") {
-          weakness = await Jimp.read(
-            `/poke/energy-small-${formData.weakness}.png`
-          );
-        } else {
-          weakness = new Jimp({
-            width: 1,
-            height: 1,
-            color: rgbaToInt(0, 0, 0, 0),
-          });
-        }
-        let resistance;
-        if (formData.resistance != "none") {
-          resistance = await Jimp.read(
-            `/poke/energy-small-${formData.resistance}.png`
-          );
-        } else {
-          resistance = new Jimp({
-            width: 1,
-            height: 1,
-            color: rgbaToInt(0, 0, 0, 0),
-          });
-        }
-        const retreat = await Jimp.read(`/poke/energy-small-colorless.png`);
-
-        // name
-        card.print({ font: gillCb48, x: 72, y: 60, text: `${formData.name}` });
-
-        // hp
-        const hp = await Jimp.read(`/poke/hp-${formData.hp}.png`);
-        hp.resize({ w: 118, h: 32 });
-        card.composite(hp, 490, 76);
-
-        // desc type, height & weight
-        card.print({
-          font: gillRbi22,
-          x: 100,
-          y: 529,
-          text: {
-            text: `${formData.descType} Pokemon. Length: ${lengthValue}, Weight: ${weightValue} lbs.`,
-            alignmentX: HorizontalAlign.CENTER,
-          },
-          maxWidth: 525,
-          maxHeight: 30,
-        });
-
-        // flavor text
-        card.print({
-          font: gillRbi22,
-          x: 87,
-          y: 877,
-          text: {
-            text: `${formData.flavorText}`,
-            alignmentX: HorizontalAlign.LEFT,
-          },
-          maxWidth: 590,
-          maxHeight: 55,
-        });
-
-        // move 1
-        card.composite(energyType, 80, 609);
-        card.print({
-          font: gillCb44,
-          x: 114,
-          y: 600,
-          text: {
-            text: `${formData.move1name}`,
-            alignmentX: HorizontalAlign.CENTER,
-            alignmentY: VerticalAlign.MIDDLE,
-          },
-          maxWidth: 500,
-          maxHeight: 50,
-        });
-        card.print({
-          font: gillRp64,
-          x: 570,
-          y: 600,
-          text: {
-            text: `${formData.move1dmg}`,
-            alignmentX: HorizontalAlign.CENTER,
-            alignmentY: VerticalAlign.MIDDLE,
-          },
-          maxWidth: 100,
-          maxHeight: 50,
-        });
-
-        // move 2
-        card.composite(energyType, 58, 709);
-        card.composite(energyColorless, 108, 709);
-        card.print({
-          font: gillCb44,
-          x: 114,
-          y: 700,
-          text: {
-            text: `${formData.move2name}`,
-            alignmentX: HorizontalAlign.CENTER,
-            alignmentY: VerticalAlign.MIDDLE,
-          },
-          maxWidth: 500,
-          maxHeight: 50,
-        });
-        card.print({
-          font: gillRp64,
-          x: 570,
-          y: 700,
-          text: {
-            text: `${formData.move2dmg}`,
-            alignmentX: HorizontalAlign.CENTER,
-            alignmentY: VerticalAlign.MIDDLE,
-          },
-          maxWidth: 100,
-          maxHeight: 50,
-        });
-
-        // weakness, resistance & retreat cost
-        card.composite(weakness, 100, 834);
-        card.composite(resistance, 340, 834);
-        if (formData.retreatCost === "1") {
-          card.composite(retreat, 580, 834);
-        } else if (formData.retreatCost === "2") {
-          card.composite(retreat, 563, 834);
-          card.composite(retreat, 596, 834);
-        } else if (formData.retreatCost === "3") {
-          card.composite(retreat, 547, 834);
-          card.composite(retreat, 580, 834);
-          card.composite(retreat, 612, 834);
-        }
-
-        // downsize and upsize for resolution matching
-        card.resize({ w: 363, h: 498 });
-        card.resize({ w: 726, h: 996 });
-
-        // output
-        return card;
-      }
-
-      async function updateImage() {
-        // if (abortController.signal.aborted) return;
-
-        if (!file) {
-          const missingo = await Jimp.read("/poke/missingno.png");
-          const outputImage = await makeCard(
-            missingo as InstanceType<typeof Jimp>
-          );
-          const base64 = await outputImage.getBase64("image/png");
-          setOutput(base64);
-        } else {
-          const reader = new FileReader();
-          reader.onload = async (e) => {
-            if (!e.target) return;
-            const buffer = e.target.result as ArrayBuffer;
-            const inputImage = await Jimp.read(buffer);
-
-            const outputImage = await makeCard(
-              inputImage as InstanceType<typeof Jimp>
-            );
-
-            const base64 = await outputImage.getBase64("image/png");
-            setOutput(base64);
-          };
-          reader.readAsArrayBuffer(file);
-        }
-      }
-
-      updateImage();
-    }, 1500);
-
-    return () => {
-      clearInterval(renderCardReset);
-      // abortController.abort();
-    };
-  }, [formData, file]);
-
   return (
     <div className="flex flex-col gap-0 w-full h-svh justify-evenly items-center">
       <h1 className="handwriting text-5xl opacity-50 text-zinc-100 pt-6">
@@ -307,7 +221,7 @@ export default function PokeCardCreator() {
         <form
           onSubmit={handleUpdate}
           onChange={handleUpdate}
-          className="flex gap-10 grow text-black text-md rounded-3xl bg-slate-700 bg-opacity-40 px-12 py-10"
+          className="flex gap-10 grow text-black text-md rounded-3xl bg-slate-700 bg-opacity-40 px-12 py-10 overflow-y-auto max-h-[80vh]"
         >
           <div className="flex flex-col gap-5">
             <div>
@@ -321,6 +235,15 @@ export default function PokeCardCreator() {
                 onChange={handleFile}
               />
             </div>
+
+            {/* Image positioning controls */}
+            <ImagePositionControls
+              position={imagePosition}
+              onPositionChange={setImagePosition}
+              isEnabled={positioningEnabled}
+              onToggle={setPositioningEnabled}
+            />
+            
             <div className="flex gap-8">
               <div className="">
                 <label className="" htmlFor="name">
@@ -501,27 +424,41 @@ export default function PokeCardCreator() {
                   none
                 </option>
                 <option value="1" className="">
-                ✴️
+                  ✴️
                 </option>
                 <option value="2" className="">
-                ✴️ ✴️
+                  ✴️ ✴️
                 </option>
                 <option value="3" className="">
-                ✴️ ✴️ ✴️
+                  ✴️ ✴️ ✴️
                 </option>
               </select>
             </div>
-            <button className="mt-2" onClick={handleDownload}>Download Card</button>
+            <button className="mt-2" onClick={handleDownload} disabled={!output || isGenerating}>
+              {isGenerating ? "Generating..." : "Download Card"}
+            </button>
           </div>
         </form>
-        <div className="rounded-3xl min-h-0 bg-slate-700 bg-opacity-40 p-5">
-          {!output ? (
-            <div className="flex flex-col justify-center items-center">
-              <p className="text-4xl mb-20 font-medium text-zinc-100">Loading</p>
+        <div className="rounded-3xl min-h-0 bg-slate-700 bg-opacity-40 p-5 relative">
+          {!output || isGenerating ? (
+            <div className="flex flex-col justify-center items-center h-full min-h-[500px]">
+              <p className="text-4xl mb-20 font-medium text-zinc-100">
+                {isGenerating ? "Generating" : "Loading"}
+              </p>
               <DotLoader size={100} color={"#2f2e2e"} />
             </div>
           ) : (
-            <Image src={output} alt="poke" height={500} width={500} />
+            <div className="relative">
+              <Image src={output} alt="poke" height={500} width={500} className="rounded-lg" />
+              <ImagePositionOverlay
+                position={imagePosition}
+                onPositionChange={setImagePosition}
+                isEnabled={positioningEnabled}
+                cardWidth={500}
+                cardHeight={500}
+                imageFile={file}
+              />
+            </div>
           )}
         </div>
       </div>
