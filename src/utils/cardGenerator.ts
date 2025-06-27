@@ -26,9 +26,12 @@ export interface ImagePosition {
 export class PokemonCardGenerator {
   private static fonts: { [key: string]: any } = {};
   private static images: { [key: string]: any } = {};
+  private static assetsLoaded = false;
 
   // Cache frequently used assets
-  static async preloadAssets() {
+  static async preloadAssets(): Promise<void> {
+    if (this.assetsLoaded) return;
+    
     try {
       // Preload fonts
       this.fonts = {
@@ -47,8 +50,11 @@ export class PokemonCardGenerator {
       
       this.images['energy-colorless'] = await Jimp.read(`/poke/energy-colorless.png`);
       this.images['energy-small-colorless'] = await Jimp.read(`/poke/energy-small-colorless.png`);
+      
+      this.assetsLoaded = true;
     } catch (error) {
       console.error('Failed to preload assets:', error);
+      throw error;
     }
   }
 
@@ -58,6 +64,9 @@ export class PokemonCardGenerator {
     positioning: boolean = false,
     imagePosition?: ImagePosition
   ): Promise<any> {
+    // Ensure assets are loaded before generating
+    await this.preloadAssets();
+    
     // Create base card
     const blank = new Jimp({
       width: 726,
@@ -102,8 +111,27 @@ export class PokemonCardGenerator {
       canvas.composite(processedImage, imageX, imageY);
       processedImage = canvas;
     } else {
-      // Default behavior - resize to fit
-      processedImage = inputImage.resize({ w: 558, h: 390 });
+      // Default behavior - fill frame while maintaining aspect ratio
+      const frameWidth = 558;
+      const frameHeight = 390;
+      
+      // Calculate scale to fill frame
+      const scaleX = frameWidth / inputImage.width;
+      const scaleY = frameHeight / inputImage.height;
+      const fillScale = Math.max(scaleX, scaleY);
+      
+      // Scale the image to fill
+      const scaledWidth = Math.floor(inputImage.width * fillScale);
+      const scaledHeight = Math.floor(inputImage.height * fillScale);
+      processedImage = inputImage.resize({ w: scaledWidth, h: scaledHeight });
+      
+      // Create frame-sized canvas and center the image (overflow will be clipped)
+      const canvas = new Jimp({ width: frameWidth, height: frameHeight, color: rgbaToInt(0, 0, 0, 0) });
+      const centerX = Math.floor((frameWidth - scaledWidth) / 2);
+      const centerY = Math.floor((frameHeight - scaledHeight) / 2);
+      
+      canvas.composite(processedImage, centerX, centerY);
+      processedImage = canvas;
     }
 
     // Composite background and overlay
@@ -125,6 +153,12 @@ export class PokemonCardGenerator {
   }
 
   private static async addText(card: any, cardData: PokemonCardData) {
+    // Ensure fonts are available
+    if (!this.assetsLoaded || !this.fonts.gillCb44 || !this.fonts.gillCb48 || !this.fonts.gillRp64 || !this.fonts.gillRbi22) {
+      console.warn('Fonts not loaded, skipping text rendering');
+      return;
+    }
+
     const { gillCb44, gillCb48, gillRp64, gillRbi22 } = this.fonts;
 
     // Name

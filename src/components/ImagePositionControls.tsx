@@ -7,13 +7,15 @@ interface ImagePositionControlsProps {
   onPositionChange: (position: ImagePosition) => void;
   isEnabled: boolean;
   onToggle: (enabled: boolean) => void;
+  defaultPosition: ImagePosition;
 }
 
 export default function ImagePositionControls({
   position,
   onPositionChange,
   isEnabled,
-  onToggle
+  onToggle,
+  defaultPosition
 }: ImagePositionControlsProps) {
   return (
     <div className="flex flex-col gap-3">
@@ -39,7 +41,7 @@ export default function ImagePositionControls({
           </p>
           <button
             type="button"
-            onClick={() => onPositionChange({ x: 279, y: 195, scale: 1 })}
+            onClick={() => onPositionChange(defaultPosition)}
             className="text-xs bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded"
           >
             Reset Position

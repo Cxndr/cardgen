@@ -15,6 +15,7 @@ export default function PokeCardCreator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const isGeneratingRef = useRef(false);
   const [file, setFile] = useState<File | null>(null);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [lengthValue, setLengthValue] = useState("0'1\"");
   const [weightValue, setWeightValue] = useState("0.1");
   const [weightSlider, setWeightSlider] = useState(1);
@@ -27,50 +28,56 @@ export default function PokeCardCreator() {
     y: 195, // Center of 390px height
     scale: 1
   });
+  const [defaultImagePosition, setDefaultImagePosition] = useState<ImagePosition>({
+    x: 279,
+    y: 195,
+    scale: 1
+  });
 
-  // Auto-calculate initial scale when image changes
-  useEffect(() => {
-    if (file) {
+  // Function to calculate default scale for an image
+  const calculateDefaultScale = useCallback((imageFile: File | null): Promise<number> => {
+    return new Promise((resolve) => {
+      if (!imageFile) {
+        resolve(1); // MissingNo default scale
+        return;
+      }
+
       const img = document.createElement('img');
       img.onload = () => {
         const frameWidth = 558;
         const frameHeight = 390;
         
-        // Calculate scale to fill frame dimension (fill the constraining dimension)
+        // Calculate scale to fill frame while maintaining aspect ratio
         const scaleX = frameWidth / img.width;
         const scaleY = frameHeight / img.height;
-        const imageAspectRatio = img.width / img.height;
-        const frameAspectRatio = frameWidth / frameHeight;
         
-        let fitScale;
-        if (imageAspectRatio > frameAspectRatio) {
-          // Image is wider than frame - fill HEIGHT
-          fitScale = scaleY;
-        } else {
-          // Image is taller than frame - fill WIDTH  
-          fitScale = scaleX;
-        }
+        // Use the larger scale to ensure the frame is filled (smaller dimension fits, larger overflows)
+        const fillScale = Math.max(scaleX, scaleY);
         
-        setImagePosition({
-          x: 279, // Center
-          y: 195, // Center  
-          scale: fitScale
-        });
+        resolve(fillScale);
       };
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         img.src = e.target?.result as string;
       };
-      reader.readAsDataURL(file);
-    } else {
-      // Reset to default for MissingNo
-      setImagePosition({
-        x: 279,
-        y: 195,
-        scale: 1
-      });
-    }
-  }, [file]);
+      reader.readAsDataURL(imageFile);
+    });
+  }, []);
+
+  // Auto-calculate initial scale when image changes
+  useEffect(() => {
+    calculateDefaultScale(file).then((defaultScale) => {
+      const defaultPos = {
+        x: 279, // Center
+        y: 195, // Center  
+        scale: defaultScale
+      };
+      
+      setDefaultImagePosition(defaultPos);
+      setImagePosition(defaultPos);
+    });
+  }, [file, calculateDefaultScale]);
 
   const [formData, setFormData] = useState({
     name: "MissingNo.",
@@ -93,12 +100,20 @@ export default function PokeCardCreator() {
 
   // Preload assets on component mount
   useEffect(() => {
-    PokemonCardGenerator.preloadAssets();
+    PokemonCardGenerator.preloadAssets()
+      .then(() => {
+        setAssetsLoaded(true);
+      })
+      .catch((error) => {
+        console.error("Failed to load assets:", error);
+        // Still set to true to prevent infinite loading
+        setAssetsLoaded(true);
+      });
   }, []);
 
   const generateCard = useCallback(async () => {
     // Don't generate card while positioning mode is enabled (for real-time feedback)
-    if (isGeneratingRef.current || positioningEnabled) return;
+    if (isGeneratingRef.current || positioningEnabled || !assetsLoaded) return;
     
     isGeneratingRef.current = true;
     setIsGenerating(true);
@@ -122,8 +137,10 @@ export default function PokeCardCreator() {
       const outputImage = await PokemonCardGenerator.generateCard(
         inputImage,
         cardData,
-        // Use positioning if user has ever enabled it and moved the image from center
-        (debouncedImagePosition.x !== 279 || debouncedImagePosition.y !== 195 || debouncedImagePosition.scale !== 1),
+        // Use positioning if user has ever enabled it and moved the image from default position
+        (debouncedImagePosition.x !== defaultImagePosition.x || 
+         debouncedImagePosition.y !== defaultImagePosition.y || 
+         debouncedImagePosition.scale !== defaultImagePosition.scale),
         debouncedImagePosition
       );
 
@@ -135,17 +152,12 @@ export default function PokeCardCreator() {
       isGeneratingRef.current = false;
       setIsGenerating(false);
     }
-  }, [file, debouncedFormData, lengthValue, weightValue, positioningEnabled, debouncedImagePosition]);
+  }, [file, debouncedFormData, lengthValue, weightValue, positioningEnabled, debouncedImagePosition, assetsLoaded, defaultImagePosition]);
 
-  // Generate card when dependencies change
+  // Generate card when dependencies change (including when assets are loaded)
   useEffect(() => {
     generateCard();
   }, [generateCard]);
-
-  // Generate initial card on mount
-  useEffect(() => {
-    generateCard();
-  }, []);
 
   // Generate final card when positioning mode is turned off
   useEffect(() => {
@@ -242,6 +254,7 @@ export default function PokeCardCreator() {
               onPositionChange={setImagePosition}
               isEnabled={positioningEnabled}
               onToggle={setPositioningEnabled}
+              defaultPosition={defaultImagePosition}
             />
             
             <div className="flex gap-8">
