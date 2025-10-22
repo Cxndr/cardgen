@@ -1,6 +1,8 @@
 "use client";
 
 import { Jimp } from "jimp";
+
+type JimpImage = Awaited<ReturnType<typeof Jimp.read>>;
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "@/styles/poke.css";
@@ -119,7 +121,7 @@ export default function PokeCardCreator() {
     setIsGenerating(true);
     
     try {
-      let inputImage: any;
+      let inputImage: JimpImage;
       
       if (!file) {
         inputImage = await Jimp.read("/poke/missingno.png");
@@ -225,15 +227,15 @@ export default function PokeCardCreator() {
   }
 
   return (
-    <div className="flex flex-col gap-0 w-full h-svh justify-evenly items-center">
-      <h1 className="handwriting text-5xl opacity-50 text-zinc-100 pt-6">
+    <div className="flex flex-col gap-0 p-0 pt-4 w-full h-svh justify-evenly items-center">
+      <h1 className="handwriting text-5xl opacity-50 text-zinc-100">
         Pokemon Card Generator
       </h1>
-      <div className="w-full flex justify-between p-4 gap-4">
+      <div className="w-full grow flex justify-between p-4 gap-4">
         <form
           onSubmit={handleUpdate}
           onChange={handleUpdate}
-          className="flex gap-10 grow text-black text-md rounded-3xl bg-slate-700 bg-opacity-40 px-12 py-10 overflow-y-auto max-h-[80vh]"
+          className="flex align-middle gap-10 grow text-black text-md rounded-3xl bg-slate-700 bg-opacity-40 px-12 py-10 overflow-y-auto"
         >
           <div className="flex flex-col gap-5">
             <div>
@@ -250,7 +252,7 @@ export default function PokeCardCreator() {
 
             {/* Image positioning controls */}
             <ImagePositionControls
-              position={imagePosition}
+              // position={imagePosition}
               onPositionChange={setImagePosition}
               isEnabled={positioningEnabled}
               onToggle={setPositioningEnabled}
@@ -452,7 +454,7 @@ export default function PokeCardCreator() {
             </button>
           </div>
         </form>
-        <div className="rounded-3xl min-h-0 bg-slate-700 bg-opacity-40 p-5 relative">
+      <div className="w-[38%] rounded-3xl min-h-0 bg-slate-700 bg-opacity-40 p-5 relative flex items-center justify-center">
           {!output || isGenerating ? (
             <div className="flex flex-col justify-center items-center h-full min-h-[500px]">
               <p className="text-4xl mb-20 font-medium text-zinc-100">
@@ -461,7 +463,7 @@ export default function PokeCardCreator() {
               <DotLoader size={100} color={"#2f2e2e"} />
             </div>
           ) : (
-            <div className="relative">
+            <div className="relative w-fit h-fit">
               <Image src={output} alt="poke" height={500} width={500} className="rounded-lg" />
               <ImagePositionOverlay
                 position={imagePosition}

@@ -96,8 +96,8 @@ export default function ImagePositionOverlay({
     // Card frame coordinates (the image area is offset within the card)
     const frameOffsetX = 82; // pixels from left edge of card to image area
     const frameOffsetY = 122; // pixels from top edge of card to image area
-    const frameWidth = 558; // image area width
-    const frameHeight = 390; // image area height
+    // const frameWidth = 558; // image area width
+    // const frameHeight = 390; // image area height
     
     // Scale factors based on actual rendered dimensions
     const scaleX = 726 / actualCardDimensions.width;

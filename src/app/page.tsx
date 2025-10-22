@@ -1,9 +1,9 @@
-import ProductionImageComponent from "@/components/ProductionImageComponent";
+import PokeCardCreator from "@/components/PokeCardCreator";
 
-export default function Home() {
+export default function PokePage() {
   return (
-    <div className="bg-gradient-to-tr from-indigo-500 to-rose-400 h-svh w-full">
-      <ProductionImageComponent />
+    <div className="bg-gradient-to-tr from-indigo-500 to-rose-400 h-full w-full">
+      <PokeCardCreator />
     </div>
   );
 }

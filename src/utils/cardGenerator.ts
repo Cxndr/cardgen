@@ -23,9 +23,12 @@ export interface ImagePosition {
   scale: number;
 }
 
+type LoadedFont = Awaited<ReturnType<typeof loadFont>>;
+type JimpImage = Awaited<ReturnType<typeof Jimp.read>>;
+
 export class PokemonCardGenerator {
-  private static fonts: { [key: string]: any } = {};
-  private static images: { [key: string]: any } = {};
+  private static fonts: Record<string, LoadedFont> = {};
+  private static images: Record<string, JimpImage> = {};
   private static assetsLoaded = false;
 
   // Cache frequently used assets
@@ -59,11 +62,11 @@ export class PokemonCardGenerator {
   }
 
   static async generateCard(
-    inputImage: any,
+    inputImage: JimpImage,
     cardData: PokemonCardData,
     positioning: boolean = false,
     imagePosition?: ImagePosition
-  ): Promise<any> {
+  ): Promise<JimpImage> {
     // Ensure assets are loaded before generating
     await this.preloadAssets();
     
@@ -79,14 +82,16 @@ export class PokemonCardGenerator {
     const overlay = await Jimp.read(`/poke/${cardData.type}.png`);
 
     // Handle image positioning
-    let processedImage: any;
+    let processedImage: JimpImage;
     if (positioning && imagePosition) {
       // Scale the image while maintaining aspect ratio
       const scale = imagePosition.scale;
-      const scaledWidth = Math.floor(inputImage.width * scale);
-      const scaledHeight = Math.floor(inputImage.height * scale);
+      const originalWidth = inputImage.width;
+      const originalHeight = inputImage.height;
+      const scaledWidth = Math.floor(originalWidth * scale);
+      const scaledHeight = Math.floor(originalHeight * scale);
       
-      processedImage = inputImage.resize({ w: scaledWidth, h: scaledHeight });
+      processedImage = inputImage.clone().resize({ w: scaledWidth, h: scaledHeight }) as JimpImage;
       
       // Create frame-sized canvas - no clipping, just positioning
       const frameWidth = 558;
@@ -109,21 +114,23 @@ export class PokemonCardGenerator {
       
       // Composite the image - parts outside frame will naturally be clipped by canvas bounds
       canvas.composite(processedImage, imageX, imageY);
-      processedImage = canvas;
+      processedImage = canvas as JimpImage;
     } else {
       // Default behavior - fill frame while maintaining aspect ratio
       const frameWidth = 558;
       const frameHeight = 390;
       
       // Calculate scale to fill frame
-      const scaleX = frameWidth / inputImage.width;
-      const scaleY = frameHeight / inputImage.height;
+      const originalWidth = inputImage.width;
+      const originalHeight = inputImage.height;
+      const scaleX = frameWidth / originalWidth;
+      const scaleY = frameHeight / originalHeight;
       const fillScale = Math.max(scaleX, scaleY);
       
       // Scale the image to fill
-      const scaledWidth = Math.floor(inputImage.width * fillScale);
-      const scaledHeight = Math.floor(inputImage.height * fillScale);
-      processedImage = inputImage.resize({ w: scaledWidth, h: scaledHeight });
+      const scaledWidth = Math.floor(originalWidth * fillScale);
+      const scaledHeight = Math.floor(originalHeight * fillScale);
+      processedImage = inputImage.clone().resize({ w: scaledWidth, h: scaledHeight }) as JimpImage;
       
       // Create frame-sized canvas and center the image (overflow will be clipped)
       const canvas = new Jimp({ width: frameWidth, height: frameHeight, color: rgbaToInt(0, 0, 0, 0) });
@@ -131,15 +138,15 @@ export class PokemonCardGenerator {
       const centerY = Math.floor((frameHeight - scaledHeight) / 2);
       
       canvas.composite(processedImage, centerX, centerY);
-      processedImage = canvas;
+      processedImage = canvas as JimpImage;
     }
 
     // Composite background and overlay
     // processedImage is already positioned if using positioning mode
     // For positioning mode, processedImage is the final 558x390 positioned image
     // For non-positioning mode, processedImage is a 558x390 stretched image
-    const background = blank.composite(processedImage, 82, 122);
-    const card = background.composite(overlay, 0, 0);
+    const background = blank.composite(processedImage, 82, 122) as JimpImage;
+    const card = background.composite(overlay, 0, 0) as JimpImage;
 
     // Add card elements
     await this.addText(card, cardData);
@@ -152,7 +159,7 @@ export class PokemonCardGenerator {
     return card;
   }
 
-  private static async addText(card: any, cardData: PokemonCardData) {
+  private static async addText(card: JimpImage, cardData: PokemonCardData): Promise<void> {
     // Ensure fonts are available
     if (!this.assetsLoaded || !this.fonts.gillCb44 || !this.fonts.gillCb48 || !this.fonts.gillRp64 || !this.fonts.gillRbi22) {
       console.warn('Fonts not loaded, skipping text rendering');
@@ -243,7 +250,7 @@ export class PokemonCardGenerator {
     });
   }
 
-  private static async addImages(card: any, cardData: PokemonCardData) {
+  private static async addImages(card: JimpImage, cardData: PokemonCardData): Promise<void> {
     // HP
     const hp = await Jimp.read(`/poke/hp-${cardData.hp}.png`);
     hp.resize({ w: 118, h: 32 });

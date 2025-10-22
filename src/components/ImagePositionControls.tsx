@@ -3,7 +3,7 @@
 import { ImagePosition } from "@/utils/cardGenerator";
 
 interface ImagePositionControlsProps {
-  position: ImagePosition;
+  // position: ImagePosition;
   onPositionChange: (position: ImagePosition) => void;
   isEnabled: boolean;
   onToggle: (enabled: boolean) => void;
@@ -11,7 +11,7 @@ interface ImagePositionControlsProps {
 }
 
 export default function ImagePositionControls({
-  position,
+  // position,
   onPositionChange,
   isEnabled,
   onToggle,
