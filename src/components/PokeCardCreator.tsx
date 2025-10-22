@@ -1,8 +1,6 @@
 "use client";
 
 import { Jimp } from "jimp";
-
-type JimpImage = Awaited<ReturnType<typeof Jimp.read>>;
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "@/styles/poke.css";
@@ -11,6 +9,8 @@ import { PokemonCardGenerator, PokemonCardData, ImagePosition } from "@/utils/ca
 import { useDebounce } from "@/utils/debounce";
 import ImagePositionControls from "./ImagePositionControls";
 import ImagePositionOverlay from "./ImagePositionOverlay";
+
+type JimpImage = Awaited<ReturnType<typeof Jimp.read>>;
 
 export default function PokeCardCreator() {
   const [output, setOutput] = useState("");
@@ -227,17 +227,17 @@ export default function PokeCardCreator() {
   }
 
   return (
-    <div className="flex flex-col gap-0 p-0 pt-4 w-full h-svh justify-evenly items-center">
-      <h1 className="handwriting text-5xl opacity-50 text-zinc-100">
+    <div className="flex flex-col w-full min-h-screen lg:h-screen justify-start lg:justify-center items-center gap-6 px-4 py-8 lg:py-6 lg:overflow-hidden">
+      <h1 className="handwriting text-4xl sm:text-5xl opacity-50 text-zinc-100 text-center">
         Pokemon Card Generator
       </h1>
-      <div className="w-full grow flex justify-between p-4 gap-4">
+      <div className="w-full flex flex-col gap-6 lg:flex-1 lg:flex-row lg:gap-8 lg:items-stretch lg:h-full lg:overflow-hidden">
         <form
           onSubmit={handleUpdate}
           onChange={handleUpdate}
-          className="flex align-middle gap-10 grow text-black text-md rounded-3xl bg-slate-700 bg-opacity-40 px-12 py-10 overflow-y-auto"
+          className="flex flex-col lg:flex-row items-center lg:items-stretch gap-6 lg:gap-10 w-full lg:flex-1 text-black text-md rounded-3xl bg-slate-700/40 px-6 py-6 lg:px-12 lg:py-10 overflow-y-auto max-h-none lg:h-full lg:max-h-full mx-auto lg:mx-0"
         >
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-5 w-full max-w-xl lg:max-w-none items-center lg:items-start text-center lg:text-left">
             <div>
               <label className="" htmlFor="image-select">
                 Image
@@ -247,6 +247,7 @@ export default function PokeCardCreator() {
                 type="file"
                 accept="image/*"
                 onChange={handleFile}
+                className="max-w-64"
               />
             </div>
 
@@ -259,18 +260,18 @@ export default function PokeCardCreator() {
               defaultPosition={defaultImagePosition}
             />
             
-            <div className="flex gap-8">
-              <div className="">
+            <div className="flex flex-col gap-4 lg:flex-row lg:gap-8 w-full items-center lg:items-end">
+              <div className="flex flex-col items-center lg:items-start w-full lg:w-auto">
                 <label className="" htmlFor="name">
                   Name
                 </label>
-                <input type="text" name="name" maxLength={12} size={12} />
+                <input className="text-center lg:text-left" type="text" name="name" maxLength={12} size={12} />
               </div>
-              <div>
+              <div className="flex flex-col items-center lg:items-start">
                 <label className="" htmlFor="hp">
                   HP
                 </label>
-                <select name="hp" id="hp">
+                <select className="text-center lg:text-left" name="hp" id="hp">
                   <option value="30">30</option>
                   <option value="40">40</option>
                   <option value="50">50</option>
@@ -284,16 +285,16 @@ export default function PokeCardCreator() {
                 </select>
               </div>
             </div>
-            <div className="flex gap-8">
-              <div>
+            <div className="flex flex-col gap-4 lg:flex-row lg:gap-8 w-full items-center lg:items-end">
+              <div className="flex flex-col items-center lg:items-start w-full lg:w-auto">
                 <label htmlFor="desc-type">Descriptive Type</label>
-                <input type="text" name="desc-type" maxLength={10} size={12} />
+                <input className="text-center lg:text-left" type="text" name="desc-type" maxLength={10} size={12} />
               </div>
-              <div className="">
+              <div className="flex flex-col items-center lg:items-start">
                 <label className="" htmlFor="type">
                   Energy Type
                 </label>
-                <select name="type" id="type">
+                <select className="text-center lg:text-left" name="type" id="type">
                   <option value="colorless">🕊️ Colorless</option>
                   <option value="fire">️‍🔥 Fire</option>
                   <option value="water">🌊 Water</option>
@@ -304,9 +305,9 @@ export default function PokeCardCreator() {
                 </select>
               </div>
             </div>
-            <div>
+            <div className="flex flex-col items-center lg:items-start w-full">
               <label htmlFor="length">Length</label>
-              <div className="flex gap-4">
+              <div className="flex gap-4 w-full">
                 <input
                   type="range"
                   name="length-feet"
@@ -314,14 +315,14 @@ export default function PokeCardCreator() {
                   max="360"
                   value={lengthSlider}
                   onChange={handleLengthSlider}
-                  className="w-3/4"
+                  className="w-full sm:w-3/4"
                 />
                 <span className="font-bold italic mx-auto">{lengthValue}</span>
               </div>
             </div>
-            <div>
+            <div className="flex flex-col items-center lg:items-start w-full">
               <label htmlFor="weight">Weight</label>
-              <div className="flex gap-4">
+              <div className="flex gap-4 w-full">
                 <input
                   type="range"
                   name="weight"
@@ -329,7 +330,7 @@ export default function PokeCardCreator() {
                   max="592"
                   value={weightSlider}
                   onChange={handleWeightSlider}
-                  className="w-3/4"
+                  className="w-full sm:w-3/4"
                 />
                 <span className="font-bold italic mx-auto">
                   {weightValue} lbs
@@ -338,27 +339,27 @@ export default function PokeCardCreator() {
             </div>
             <div>
               <label htmlFor="flavor-text">Flavor Text</label>
-              <textarea name="flavor-text" rows={3} maxLength={120} cols={30} />
+              <textarea className="w-full max-w-md text-center lg:text-left" name="flavor-text" rows={3} maxLength={120} cols={30} />
             </div>
           </div>
 
-          <div className="flex flex-col gap-5 border-l-zinc-300 border-opacity-40 border-l-2 pl-12">
+          <div className="flex flex-col gap-5 w-full max-w-xl lg:max-w-none items-center lg:items-start text-center lg:text-left border-t-2 border-t-zinc-300/40 pt-6 lg:pt-0 lg:border-t-0 lg:border-l-2 lg:border-l-zinc-300/40 lg:pl-12">
             <div className="bg-zinc-300 bg-opacity-30 rounded-xl pb-6 pt-4 px-8">
               <label className="italic text-orange-400 w-full text-center">
                 ~ First Attack ~
               </label>
-              <div className="flex gap-8">
-                <div>
+              <div className="flex flex-col gap-4 lg:flex-row lg:gap-8 items-center lg:items-end">
+                <div className="flex flex-col items-center lg:items-start">
                   <label className="" htmlFor="move1name">
                     Name
                   </label>
-                  <input type="text" name="move1name" maxLength={12} />
+                  <input className="text-center lg:text-left" type="text" name="move1name" maxLength={12} />
                 </div>
-                <div>
+                <div className="flex flex-col items-center lg:items-start">
                   <label className="" htmlFor="move1dmg">
                     Dmg
                   </label>
-                  <select name="move1dmg" id="move1dmg">
+                  <select className="text-center lg:text-left" name="move1dmg" id="move1dmg">
                     <option value="10">10</option>
                     <option value="20">20</option>
                     <option value="30">30</option>
@@ -376,18 +377,18 @@ export default function PokeCardCreator() {
               <label className="italic text-rose-400 w-full text-center">
                 ~ Second Attack ~
               </label>
-              <div className="flex gap-8">
-                <div>
+              <div className="flex flex-col gap-4 lg:flex-row lg:gap-8 items-center lg:items-end">
+                <div className="flex flex-col items-center lg:items-start">
                   <label className="" htmlFor="move2name">
                     Name
                   </label>
-                  <input type="text" name="move2name" maxLength={12} />
+                  <input className="text-center lg:text-left" type="text" name="move2name" maxLength={12} />
                 </div>
-                <div>
+                <div className="flex flex-col items-center lg:items-start">
                   <label className="" htmlFor="move2dmg">
                     Dmg
                   </label>
-                  <select name="move2dmg" id="move2dmg">
+                  <select className="text-center lg:text-left" name="move2dmg" id="move2dmg">
                     <option value="10">10</option>
                     <option value="20">20</option>
                     <option value="30">30</option>
@@ -400,12 +401,12 @@ export default function PokeCardCreator() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-8">
-              <div>
+            <div className="flex flex-col gap-4 lg:flex-row lg:gap-8 items-center lg:items-end">
+              <div className="flex flex-col items-center lg:items-start">
                 <label className="" htmlFor="weakness">
                   Weakness
                 </label>
-                <select name="weakness" id="weakness">
+                <select className="text-center lg:text-left" name="weakness" id="weakness">
                   <option value="fire">️‍🔥 Fire</option>
                   <option value="water">🌊 Water</option>
                   <option value="grass">🌱 Grass</option>
@@ -414,11 +415,11 @@ export default function PokeCardCreator() {
                   <option value="fighting">🥊 Fighting</option>
                 </select>
               </div>
-              <div>
+              <div className="flex flex-col items-center lg:items-start">
                 <label className="" htmlFor="resistance">
                   Resistance
                 </label>
-                <select name="resistance" id="resistance">
+                <select className="text-center lg:text-left" name="resistance" id="resistance">
                   <option value="fire">️‍🔥 Fire</option>
                   <option value="water">🌊 Water</option>
                   <option value="grass">🌱 Grass</option>
@@ -428,12 +429,12 @@ export default function PokeCardCreator() {
                 </select>
               </div>
             </div>
-            <div>
+            <div className="flex flex-col items-center lg:items-start">
               <label htmlFor="retreat-cost">Retreat Cost</label>
               <select
                 name="retreat-cost"
                 id="retreat-cost"
-                className="text-center"
+                className="text-center lg:text-left"
               >
                 <option value="0" className="pr-4">
                   none
@@ -449,22 +450,29 @@ export default function PokeCardCreator() {
                 </option>
               </select>
             </div>
-            <button className="mt-2" onClick={handleDownload} disabled={!output || isGenerating}>
+            <button className="mt-2 self-center lg:self-start" onClick={handleDownload} disabled={!output || isGenerating}>
               {isGenerating ? "Generating..." : "Download Card"}
             </button>
           </div>
         </form>
-      <div className="w-[38%] rounded-3xl min-h-0 bg-slate-700 bg-opacity-40 p-5 relative flex items-center justify-center">
+        <div className="w-full lg:w-[34%] rounded-3xl min-h-0 bg-slate-700/40 p-5 relative flex items-center justify-center lg:h-full lg:overflow-hidden">
           {!output || isGenerating ? (
-            <div className="flex flex-col justify-center items-center h-full min-h-[500px]">
-              <p className="text-4xl mb-20 font-medium text-zinc-100">
+            <div className="flex flex-col justify-center items-center h-full min-h-[320px] lg:min-h-0">
+              <p className="text-3xl lg:text-4xl mb-10 lg:mb-20 font-medium text-zinc-100 text-center">
                 {isGenerating ? "Generating" : "Loading"}
               </p>
               <DotLoader size={100} color={"#2f2e2e"} />
             </div>
           ) : (
-            <div className="relative w-fit h-fit">
-              <Image src={output} alt="poke" height={500} width={500} className="rounded-lg" />
+            <div className="relative w-full max-w-[500px] h-auto mx-auto">
+              <Image
+                src={output}
+                alt="poke"
+                height={500}
+                width={500}
+                sizes="(min-width: 1024px) 500px, 90vw"
+                className="rounded-lg w-full h-auto"
+              />
               <ImagePositionOverlay
                 position={imagePosition}
                 onPositionChange={setImagePosition}
