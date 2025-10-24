@@ -100,6 +100,11 @@ export default function PokeCardCreator() {
   const debouncedFormData = useDebounce(formData, 500);
   const debouncedImagePosition = useDebounce(imagePosition, 300);
 
+  const baseInputClass = "w-full lg:w-auto rounded-md bg-white/80 px-3 py-2 text-sm sm:text-base xl:text-lg xl:px-5 xl:py-3 text-center lg:text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400";
+  const selectInputClass = "w-full lg:w-auto rounded-md bg-white/90 px-3 py-2 text-sm sm:text-base xl:text-lg xl:px-5 xl:py-3 text-center lg:text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400";
+  const textAreaClass = "w-full max-w-md rounded-md bg-white/80 px-3 py-2 text-sm sm:text-base xl:text-lg xl:px-5 xl:py-3 text-center lg:text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400";
+  const primaryButtonClass = "mt-2 self-center lg:self-start rounded-full bg-rose-400 px-6 py-3 text-base sm:text-lg xl:text-xl font-semibold text-white shadow-md hover:bg-rose-500 transition disabled:opacity-50 disabled:cursor-not-allowed";
+
   // Preload assets on component mount
   useEffect(() => {
     PokemonCardGenerator.preloadAssets()
@@ -247,7 +252,7 @@ export default function PokeCardCreator() {
                 type="file"
                 accept="image/*"
                 onChange={handleFile}
-                className="max-w-64"
+                className="w-full max-w-xs text-sm sm:text-base xl:text-lg text-zinc-100"
               />
             </div>
 
@@ -265,13 +270,13 @@ export default function PokeCardCreator() {
                 <label className="" htmlFor="name">
                   Name
                 </label>
-                <input className="text-center lg:text-left" type="text" name="name" maxLength={12} size={12} />
+                <input className={baseInputClass} type="text" name="name" maxLength={12} size={12} />
               </div>
               <div className="flex flex-col items-center lg:items-start">
                 <label className="" htmlFor="hp">
                   HP
                 </label>
-                <select className="text-center lg:text-left" name="hp" id="hp">
+                <select className={selectInputClass} name="hp" id="hp">
                   <option value="30">30</option>
                   <option value="40">40</option>
                   <option value="50">50</option>
@@ -288,13 +293,13 @@ export default function PokeCardCreator() {
             <div className="flex flex-col gap-4 lg:flex-row lg:gap-8 w-full items-center lg:items-end">
               <div className="flex flex-col items-center lg:items-start w-full lg:w-auto">
                 <label htmlFor="desc-type">Descriptive Type</label>
-                <input className="text-center lg:text-left" type="text" name="desc-type" maxLength={10} size={12} />
+                <input className={baseInputClass} type="text" name="desc-type" maxLength={10} size={12} />
               </div>
               <div className="flex flex-col items-center lg:items-start">
                 <label className="" htmlFor="type">
                   Energy Type
                 </label>
-                <select className="text-center lg:text-left" name="type" id="type">
+                <select className={selectInputClass} name="type" id="type">
                   <option value="colorless">🕊️ Colorless</option>
                   <option value="fire">️‍🔥 Fire</option>
                   <option value="water">🌊 Water</option>
@@ -339,7 +344,7 @@ export default function PokeCardCreator() {
             </div>
             <div>
               <label htmlFor="flavor-text">Flavor Text</label>
-              <textarea className="w-full max-w-md text-center lg:text-left" name="flavor-text" rows={3} maxLength={120} cols={30} />
+              <textarea className={textAreaClass} name="flavor-text" rows={3} maxLength={120} cols={30} />
             </div>
           </div>
 
@@ -353,13 +358,13 @@ export default function PokeCardCreator() {
                   <label className="" htmlFor="move1name">
                     Name
                   </label>
-                  <input className="text-center lg:text-left" type="text" name="move1name" maxLength={12} />
+                  <input className={baseInputClass} type="text" name="move1name" maxLength={12} />
                 </div>
                 <div className="flex flex-col items-center lg:items-start">
                   <label className="" htmlFor="move1dmg">
                     Dmg
                   </label>
-                  <select className="text-center lg:text-left" name="move1dmg" id="move1dmg">
+                  <select className={selectInputClass} name="move1dmg" id="move1dmg">
                     <option value="10">10</option>
                     <option value="20">20</option>
                     <option value="30">30</option>
@@ -382,13 +387,13 @@ export default function PokeCardCreator() {
                   <label className="" htmlFor="move2name">
                     Name
                   </label>
-                  <input className="text-center lg:text-left" type="text" name="move2name" maxLength={12} />
+                  <input className={baseInputClass} type="text" name="move2name" maxLength={12} />
                 </div>
                 <div className="flex flex-col items-center lg:items-start">
                   <label className="" htmlFor="move2dmg">
                     Dmg
                   </label>
-                  <select className="text-center lg:text-left" name="move2dmg" id="move2dmg">
+                  <select className={selectInputClass} name="move2dmg" id="move2dmg">
                     <option value="10">10</option>
                     <option value="20">20</option>
                     <option value="30">30</option>
@@ -406,7 +411,7 @@ export default function PokeCardCreator() {
                 <label className="" htmlFor="weakness">
                   Weakness
                 </label>
-                <select className="text-center lg:text-left" name="weakness" id="weakness">
+                <select className={selectInputClass} name="weakness" id="weakness">
                   <option value="fire">️‍🔥 Fire</option>
                   <option value="water">🌊 Water</option>
                   <option value="grass">🌱 Grass</option>
@@ -419,7 +424,7 @@ export default function PokeCardCreator() {
                 <label className="" htmlFor="resistance">
                   Resistance
                 </label>
-                <select className="text-center lg:text-left" name="resistance" id="resistance">
+                <select className={selectInputClass} name="resistance" id="resistance">
                   <option value="fire">️‍🔥 Fire</option>
                   <option value="water">🌊 Water</option>
                   <option value="grass">🌱 Grass</option>
@@ -434,7 +439,7 @@ export default function PokeCardCreator() {
               <select
                 name="retreat-cost"
                 id="retreat-cost"
-                className="text-center lg:text-left"
+                className={selectInputClass}
               >
                 <option value="0" className="pr-4">
                   none
@@ -450,7 +455,7 @@ export default function PokeCardCreator() {
                 </option>
               </select>
             </div>
-            <button className="mt-2 self-center lg:self-start" onClick={handleDownload} disabled={!output || isGenerating}>
+            <button className={primaryButtonClass} onClick={handleDownload} disabled={!output || isGenerating}>
               {isGenerating ? "Generating..." : "Download Card"}
             </button>
           </div>
